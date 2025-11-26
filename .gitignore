@@ -1,5 +1,6 @@
 # Environment & IDE
 .idea/
+.vscode/
 __pycache__/
 *.pyc
 *.pyo
@@ -7,11 +8,15 @@ __pycache__/
 .env
 venv/
 .venv/
-*.db
 
-# Jupyter checkpoints
+# SQLite databases
+db/*.db
+
+# Jupyter notebooks
 .ipynb_checkpoints/
 
 # OS junk
 .DS_Store
 Thumbs.db
+
+
