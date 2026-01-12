@@ -168,7 +168,7 @@ def parse_json_to_raw_df(response):
     # ---- Build raw DF ----
     df_raw = pd.DataFrame(data["Rows"])
 
-    # ---- Required columns present? ----
+    # ---- Required columns present ----
     required = {"Value", "Region", "EffectiveTime", "FieldName"}
     missing = required - set(df_raw.columns)
     if missing:
@@ -351,3 +351,4 @@ if __name__ == "__main__":
     print("")
     summary = fetch_range(date(2025, 10, 23), date(2025, 10, 24), ["windactual", "solaractual"])
     print(summary)
+    print("TEST COMPLETE")

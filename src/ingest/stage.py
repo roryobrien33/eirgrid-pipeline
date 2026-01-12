@@ -95,3 +95,4 @@ if __name__ == "__main__":
         n = conn.execute("SELECT COUNT(*) FROM stg_readings;").fetchone()[0]
         print("stg_readings row count:", n)
         print(conn.execute("SELECT * FROM stg_readings ORDER BY ts_utc LIMIT 3;").fetchall())
+        print("TEST COMPLETE")

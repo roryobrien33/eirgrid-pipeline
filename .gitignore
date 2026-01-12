@@ -10,7 +10,12 @@ venv/
 .venv/
 
 # SQLite databases
-db/*.db
+*.db
+*.db-wal
+*.db-shm
+
+# Data outputs (generated)
+data/
 
 # Jupyter notebooks
 .ipynb_checkpoints/

@@ -30,6 +30,28 @@ CREATE TABLE IF NOT EXISTS fact_readings (
     UNIQUE (ts_utc, metric_id, region_id)          -- idempotent key
 );
 
+CREATE TABLE IF NOT EXISTS fact_forecasts (
+    forecast_date  TEXT    NOT NULL,    -- the day being predicted (e.g. '2025-12-09')
+    ts_utc         TEXT    NOT NULL,    -- timestamp of prediction slot in UTC
+    metric_code    TEXT    NOT NULL,    -- wind_actual, solar_actual, demand_actual
+    region_code    TEXT    NOT NULL,    -- 'ALL' for now
+    train_days     INTEGER NOT NULL,    -- training window size (e.g. 60)
+    model_name     TEXT    NOT NULL,    -- e.g. 'prophet'
+    yhat           REAL    NOT NULL,
+    yhat_lower     REAL    NOT NULL,
+    yhat_upper     REAL    NOT NULL,
+    generated_utc  TEXT    NOT NULL,    -- when the forecast was produced
+    PRIMARY KEY (
+        forecast_date,
+        ts_utc,
+        metric_code,
+        region_code,
+        model_name,
+        train_days
+    )
+);
+
+
 -- Query performance helpers
 CREATE INDEX IF NOT EXISTS ix_fact_ts         ON fact_readings (ts_utc);
 CREATE INDEX IF NOT EXISTS ix_fact_metric_ts  ON fact_readings (metric_id, ts_utc);

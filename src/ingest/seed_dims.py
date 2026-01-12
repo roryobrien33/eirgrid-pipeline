@@ -63,7 +63,7 @@ def seed_dimensions():
 # Allow script to run standalone
 if __name__ == "__main__":
     seed_dimensions()
-
+    print("TEST COMPLETE")
 
 
 
