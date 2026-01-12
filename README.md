@@ -194,11 +194,11 @@ eirgrid-pipeline/
 
 ├─ data/
 
-│ └─ processed/
+│ └─ processed (gitignored)
 
-│ └─ dashboard/
+│  └─ dashboard/ (gitignored)
 
-│ └─ demand\_forecast\_vs\_actual.parquet
+│  └─ demand\_forecast\_vs\_actual.parquet (gitignored)
 
 │
 
@@ -265,10 +265,6 @@ eirgrid-pipeline/
 │ └─ readings.py (warehouse access helpers)
 
 │
-
-├─ tests/
-
-├─ tmp/
 
 ├─ .env.example
 
@@ -364,7 +360,7 @@ Promotion only occurs if:
 
 
 
-Canonicalisation steps:
+Canonicalization steps:
 
 ⦁ Load staging rows for the UTC window
 
@@ -495,6 +491,4 @@ Author
 Rory O’Brien
 
 GitHub: https://github.com/roryobrien33
-
-
 
