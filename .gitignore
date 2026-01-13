@@ -24,6 +24,10 @@ data/
 .DS_Store
 Thumbs.db
 
+# Walkthrough notebook (keep HTML only)
+notebooks/pipeline_walkthrough.ipynb
+
+
 **/eirgrid-pipeline_dashboard.png
 
 
