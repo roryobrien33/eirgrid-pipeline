@@ -27,6 +27,12 @@ Thumbs.db
 # Walkthrough notebook (keep HTML only)
 notebooks/pipeline_walkthrough.ipynb
 
+# Exploratory notebooks (not published)
+notebooks/00_api_probe.ipynb
+notebooks/01_eda_readings.ipynb
+notebooks/03_forecasting.ipynb
+
+
 
 **/eirgrid-pipeline_dashboard.png
 
