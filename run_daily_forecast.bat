@@ -1,16 +1,21 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 REM ============================================================
 REM run_daily_forecast.bat
 REM - Runs the daily ETL + next-day forecasts
-REM - Forces a specific conda env python (avoids Windows alias issues)
-REM - Sets PYTHONPATH so python -m pipeline... resolves correctly
+REM - Uses the active Python interpreter (conda / venv)
+REM - Resolves paths dynamically (no hard-coded user paths)
 REM ============================================================
 
-REM --- Update these if you move the project/env ---
-set "PROJECT_ROOT=C:\Users\roryo\Documents\DATA-Portfolio\eirgrid-pipeline"
-set "PYTHON_EXE=C:\Users\roryo\anaconda3\envs\eirgrid-project\python.exe"
+REM --- Resolve project root from this script's location ---
+REM This assumes the .bat file lives in the project root
+set "PROJECT_ROOT=%~dp0"
+REM Remove trailing backslash if present
+if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
+
+REM --- Python executable (from active environment) ---
+set "PYTHON_EXE=python"
 
 REM --- Runtime options ---
 set "TRAIN_DAYS=60"
@@ -18,10 +23,10 @@ set "TRAIN_DAYS=60"
 REM --- Ensure imports work regardless of working directory ---
 set "PYTHONPATH=%PROJECT_ROOT%\src"
 
-REM --- Optional: keep temp files inside the repo (recommended for reproducibility) ---
+REM --- Keep temp files inside the repo ---
 set "TMP=%PROJECT_ROOT%\tmp"
 set "TEMP=%PROJECT_ROOT%\tmp"
-if not exist "%PROJECT_ROOT%\tmp" mkdir "%PROJECT_ROOT%\tmp"
+if not exist "%TMP%" mkdir "%TMP%"
 
 echo.
 echo ============================================================
@@ -35,8 +40,10 @@ echo ============================================================
 echo.
 
 REM --- Safety checks ---
-if not exist "%PYTHON_EXE%" (
-  echo ERROR: PYTHON_EXE not found: "%PYTHON_EXE%"
+where %PYTHON_EXE% >nul 2>&1
+if errorlevel 1 (
+  echo ERROR: Python executable not found in PATH.
+  echo Activate the correct environment before running this script.
   pause
   exit /b 1
 )
@@ -47,7 +54,7 @@ if not exist "%PROJECT_ROOT%\src" (
   exit /b 1
 )
 
-REM --- Run from src (nice-to-have); PYTHONPATH already handles imports ---
+REM --- Run from src (PYTHONPATH already set) ---
 cd /d "%PROJECT_ROOT%\src"
 if errorlevel 1 (
   echo ERROR: Failed to cd into "%PROJECT_ROOT%\src"
@@ -55,9 +62,9 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM --- Print the interpreter actually being used ---
+REM --- Print interpreter details ---
 echo Verifying interpreter...
-"%PYTHON_EXE%" -c "import sys; print('sys.executable=', sys.executable); print('sys.version=', sys.version.split()[0])"
+%PYTHON_EXE% -c "import sys; print('sys.executable=', sys.executable); print('sys.version=', sys.version.split()[0])"
 if errorlevel 1 (
   echo ERROR: Failed interpreter sanity check.
   pause
@@ -68,7 +75,7 @@ echo.
 echo Running: python -m pipeline.daily_forecast_runner --train-days %TRAIN_DAYS%
 echo.
 
-"%PYTHON_EXE%" -m pipeline.daily_forecast_runner --train-days %TRAIN_DAYS%
+%PYTHON_EXE% -m pipeline.daily_forecast_runner --train-days %TRAIN_DAYS%
 set "EXITCODE=%ERRORLEVEL%"
 
 echo.

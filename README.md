@@ -394,6 +394,100 @@ Negative forecast values are clipped to 0.0 MW to respect physical constraints.
 
 
 
+Forecasting Scope \& Design Decisions
+
+
+
+Although the pipeline ingests, stores, and canonicalizes wind, solar, and system demand data, the forecasting and dashboard layer in this project intentionally focuses on system demand only.
+
+
+
+This decision is deliberate and reflects practical modelling, data-quality, and portfolio-scoping considerations rather than a technical limitation.
+
+
+
+Why Demand Was Prioritised
+
+
+
+System demand is:
+
+
+
+⦁ A continuous signal with relatively stable temporal structure
+
+⦁ Less sensitive to short-term exogenous volatility than renewables
+
+⦁ Well-suited to univariate statistical forecasting methods (e.g. Prophet)
+
+⦁ Directly interpretable for model evaluation using standard error metrics (RMSE, MAPE)
+
+
+
+This makes demand an appropriate first forecasting target for demonstrating:
+
+
+
+⦁ Rolling, leakage-safe forecast generation
+
+⦁ Historical backfilled forecasts for evaluation
+
+⦁ Forecast storage, comparison, and BI integration
+
+⦁ End-to-end production-style ML orchestration
+
+
+
+Why Wind and Solar Were Not Forecasted (Yet)
+
+
+
+Wind and solar generation exhibit characteristics that require additional modelling complexity beyond the scope of this iteration:
+
+
+
+⦁ Strong dependence on exogenous variables (weather, irradiance, wind speed)
+
+⦁ Structural zero-generation periods (e.g. solar at night)
+
+⦁ Higher short-term volatility and regime changes
+
+⦁ Greater sensitivity to capacity changes and curtailment
+
+
+
+While simple statistical forecasts can be produced, doing so without incorporating weather features or capacity context risks producing misleading results.
+
+
+
+Rather than include weaker or unrealistic renewable forecasts, the project intentionally limits forecasting to demand while still fully ingesting and storing renewable actuals for future extension.
+
+
+
+Design Intent
+
+
+
+This project is structured so that:
+
+
+
+⦁ Renewable forecasting can be added cleanly without refactoring the pipeline
+
+⦁ Additional models (e.g. weather-driven, hybrid, or ML-based) can coexist in fact\_forecasts
+
+⦁ Dashboards can be extended to compare demand forecasts with renewable penetration or net demand
+
+
+
+In other words, wind and solar are first-class data citizens in the warehouse, even though they are not yet forecasted in this iteration.
+
+
+
+This mirrors real-world production systems, where pipelines often support more data than is immediately modelled, allowing forecasting capability to evolve incrementally without architectural change.
+
+
+
 Daily Operation
 
 
