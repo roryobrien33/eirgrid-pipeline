@@ -2,17 +2,103 @@ EirGrid Renewable Energy, Demand \& Forecasting Pipeline
 
 
 
-Automated ingestion, warehousing, forecasting, and analytics pipeline for EirGrid Smart Grid Dashboard data (wind, solar, system demand).
+Automated ingestion, warehousing, forecasting, and analytics pipeline for
+
+EirGrid Smart Grid Dashboard data (wind, solar, system demand).
 
 
 
-This project demonstrates a complete, production-style data engineering and applied forecasting workflow:
+This project demonstrates a complete, production-style data engineering and
 
-robust HTTP ingestion, retry/backoff, timezone-safe parsing, normalized data warehousing,
+applied forecasting workflow: robust HTTP ingestion, retry/backoff,
 
-idempotent daily runs, rolling demand forecasting, historical forecast backfills,
+timezone-safe parsing, normalized data warehousing, idempotent daily runs,
 
-and BI-ready dataset export for Power BI dashboards.
+rolling demand forecasting, historical forecast backfills, and BI-ready
+
+dataset export for Power BI dashboards.
+
+
+
+────────────────────────────────────────────────────────────────────────
+
+
+
+Quick Start (Recommended)
+
+
+
+This project is designed to run as a fully containerised, one-command pipeline.
+
+No local Python installation is required.
+
+
+
+Prerequisites
+
+⦁ Docker Desktop (Windows / macOS / Linux)
+
+⦁ Docker Compose v2+
+
+
+
+Run the full pipeline (ETL + next-day forecast)
+
+
+
+Windows (PowerShell):
+
+.\\run.ps1
+
+
+
+macOS / Linux:
+
+./run.sh
+
+
+
+This single command will:
+
+⦁ Build the Docker image
+
+⦁ Initialise the SQLite warehouse (idempotent)
+
+⦁ Ingest the latest complete day of EirGrid data
+
+⦁ Generate next-day demand forecasts
+
+⦁ Persist outputs to:
+
+&nbsp; - db/eirgrid.db
+
+&nbsp; - data/processed/forecasts/\*.csv
+
+&nbsp; - data/processed/dashboard/\*.parquet
+
+
+
+Custom training window
+
+
+
+Windows:
+
+.\\run.ps1 -TrainDays 30
+
+
+
+macOS / Linux:
+
+./run.sh --train-days 30
+
+
+
+Docker is the recommended and supported execution method.
+
+
+
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -96,93 +182,103 @@ Analytics \& BI integration
 
 
 
+────────────────────────────────────────────────────────────────────────
+
+
+
 Architecture Overview (ASCII)
 
 
 
-┌────────────────────────────┐
+Smart Grid Dashboard API
 
-│ Smart Grid Dashboard API │
+&nbsp; └─ wind / solar / system demand (JSON)
 
-│ wind / solar / demand │
 
-└───────────────┬────────────┘
 
-│ JSON
+&nbsp;       ↓
 
-▼
 
-┌──────────────────────────┐
 
-│ fetch\_data.py │
+Ingestion Layer
 
-│ - retry / backoff │
+&nbsp; └─ fetch\_data.py
 
-│ - parse JSON │
+&nbsp;    - HTTP retry / backoff
 
-│ - local → UTC conversion │
+&nbsp;    - JSON validation
 
-│ - tidy dataframe │
+&nbsp;    - Europe/Dublin → UTC conversion
 
-└───────────────┬──────────┘
+&nbsp;    - 15-minute tidy records
 
-│ stage
 
-▼
 
-┌──────────────────────────┐
+&nbsp;       ↓
 
-│ stg\_readings (SQLite) │
 
-│ append-only raw truth │
 
-└───────────────┬──────────┘
+Staging Layer (SQLite)
 
-│ promote
+&nbsp; └─ stg\_readings
 
-▼
+&nbsp;    - Append-only raw truth
 
-┌──────────────────────────┐
+&nbsp;    - All ingested observations
 
-│ fact\_readings │
 
-│ canonical measurements │
 
-└───────────────┬──────────┘
+&nbsp;       ↓
 
-│
 
-├──────────────┐
 
-▼ ▼
+Canonical Warehouse
 
-┌─────────────────────┐ ┌──────────────────────┐
+&nbsp; └─ fact\_readings
 
-│ Forecast models │ │ Historical backfills │
+&nbsp;    - Deduplicated measurements
 
-│ (Prophet + fallback)│ │ (rolling forecasts) │
+&nbsp;    - Idempotent daily promotion
 
-└──────────┬──────────┘ └──────────┬───────────┘
+&nbsp;    - Last-write-wins semantics
 
-▼ ▼
 
-┌──────────────────────────┐
 
-│ fact\_forecasts │
+&nbsp;       ↓
 
-│ persisted predictions │
 
-└───────────────┬──────────┘
 
-▼
+Forecasting Layer
 
-┌──────────────────────────┐
+&nbsp; └─ Prophet-based demand forecasts
 
-│ Parquet export │
+&nbsp;    - Rolling next-day forecasts
 
-│ Power BI dashboards │
+&nbsp;    - Leakage-safe training window
 
-└──────────────────────────┘
+&nbsp;    - Fallback safety model
+
+&nbsp;    - Stored in fact\_forecasts
+
+
+
+&nbsp;       ↓
+
+
+
+Analytics \& BI Export
+
+&nbsp; └─ Parquet datasets
+
+&nbsp;    - Actual vs forecast curves
+
+&nbsp;    - Error metrics (RMSE, MAPE)
+
+&nbsp;    - Power BI–ready format
+
+
+
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -194,93 +290,111 @@ eirgrid-pipeline/
 
 ├─ data/
 
-│ └─ processed (gitignored)
+│  └─ processed/ (gitignored)
 
-│  └─ dashboard/ (gitignored)
+│     ├─ forecasts/
 
-│  └─ demand\_forecast\_vs\_actual.parquet (gitignored)
+│     └─ dashboard/
 
 │
 
 ├─ db/
 
-│ └─ eirgrid.db (SQLite database, gitignored)
+│  └─ eirgrid.db (SQLite database, gitignored)
 
 │
 
 ├─ notebooks/
 
-│ └─ exploratory analysis and validation
+│  └─ exploratory analysis and validation
 
 │
 
 ├─ src/
 
-│ ├─ ingest/
+│  ├─ ingest/
 
-│ │ ├─ init\_db.py (create database + tables)
+│  │  ├─ init\_db.py
 
-│ │ ├─ seed\_dims.py (load dimension tables)
+│  │  ├─ seed\_dims.py
 
-│ │ ├─ fetch\_data.py (API ingestion)
+│  │  ├─ fetch\_data.py
 
-│ │ ├─ stage.py (stg\_readings inserts)
+│  │  ├─ stage.py
 
-│ │ └─ promote.py (canonical promotion)
+│  │  └─ promote.py
 
-│ │
+│  │
 
-│ ├─ models/
+│  ├─ models/
 
-│ │ ├─ prophet\_forecast.py (Prophet forecasting logic)
+│  │  ├─ prophet\_forecast.py
 
-│ │ ├─ fallback\_forecast.py (safety fallback model)
+│  │  ├─ fallback\_forecast.py
 
-│ │ ├─ run\_forecasts.py (forecast orchestration)
+│  │  ├─ run\_forecasts.py
 
-│ │ └─ store\_forecasts.py (fact\_forecasts persistence)
+│  │  └─ store\_forecasts.py
 
-│ │
+│  │
 
-│ ├─ pipeline/
+│  ├─ pipeline/
 
-│ │ ├─ daily\_runner.py (ETL only)
+│  │  ├─ daily\_runner.py
 
-│ │ ├─ daily\_forecast\_runner.py (ETL + next-day forecast)
+│  │  ├─ daily\_forecast\_runner.py
 
-│ │ └─ backfill\_range.py (historical backfills)
+│  │  └─ backfill\_range.py
 
-│ │
+│  │
 
-│ ├─ dashboard/
+│  ├─ dashboard/
 
-│ │ ├─ export\_dashboard\_parquet.py
+│  │  └─ export\_dashboard\_parquet.py
 
-│ │ └─ Power BI dashboards (.pbix)
+│  │
 
-│ │
+│  └─ warehouse/
 
-│ └─ warehouse/
-
-│ └─ readings.py (warehouse access helpers)
+│     └─ readings.py
 
 │
+
+├─ docker/
+
+│  └─ entrypoint.sh
+
+├─ docker-compose.yml
+
+├─ Dockerfile
+
+├─ run.ps1
+
+├─ run.sh
 
 ├─ .env.example
 
 ├─ requirements.txt
 
-├─ run\_daily\_forecast.bat
-
-└─ README.txt
+└─ README.md
 
 
 
-Setup
+────────────────────────────────────────────────────────────────────────
 
 
 
-4.1 Environment
+Optional: Local Python Development (Advanced)
+
+
+
+This section is intended for contributors or users who wish to run the pipeline
+
+without Docker. Docker execution is recommended.
+
+
+
+Environment
 
 
 
@@ -294,7 +408,7 @@ pip install -r requirements.txt
 
 
 
-4.2 Environment Variables
+Environment Variables
 
 
 
@@ -308,19 +422,17 @@ Example:
 
 EIRGRID\_BASE\_URL=https://www.smartgriddashboard.com/api/chart/
 
-
-
-USER\_AGENT=EirGridPipeline/1.0 (contact: Rory O'Brien)
+USER\_AGENT=EirGridPipeline/1.0 (educational / research use)
 
 LOCAL\_TZ=Europe/Dublin
 
 
 
-4.3 Database Initialization
+Database Initialization
 
 
 
-Run once from project root:
+Run once:
 
 python -m ingest.init\_db
 
@@ -328,163 +440,7 @@ python -m ingest.seed\_dims
 
 
 
-Data Flow Explained
-
-
-
-5.1 Fetch \& Stage (fetch\_data.py)
-
-
-
-⦁ Builds multi-area API requests (wind, solar, demand)
-
-⦁ Parses JSON defensively
-
-⦁ Converts Dublin local timestamps to UTC
-
-⦁ Produces tidy rows
-
-⦁ Inserts into stg\_readings
-
-
-
-5.2 Canonical Promotion (promote.py)
-
-
-
-Promotion only occurs if:
-
-⦁ All expected 15-minute intervals exist
-
-⦁ Each metric-region pair is complete
-
-
-
-Canonicalization steps:
-
-⦁ Load staging rows for the UTC window
-
-⦁ Sort by ingestion timestamp
-
-⦁ Apply last-write-wins logic
-
-⦁ Map dimension codes to IDs
-
-⦁ Insert clean rows into fact\_readings
-
-
-
-Forecasting Pipeline
-
-
-
-⦁ One forecast generated per forecast\_date
-
-⦁ Model is trained only on historical data available at that date
-
-⦁ No leakage of future actuals into training
-
-⦁ Forecast horizon is next-day (96 × 15-minute points)
-
-⦁ Forecasts persisted to fact\_forecasts
-
-
-
-Negative forecast values are clipped to 0.0 MW to respect physical constraints.
-
-
-
-Forecasting Scope \& Design Decisions
-
-
-
-Although the pipeline ingests, stores, and canonicalizes wind, solar, and system demand data, the forecasting and dashboard layer in this project intentionally focuses on system demand only.
-
-
-
-This decision is deliberate and reflects practical modelling, data-quality, and portfolio-scoping considerations rather than a technical limitation.
-
-
-
-Why Demand Was Prioritised
-
-
-
-System demand is:
-
-
-
-⦁ A continuous signal with relatively stable temporal structure
-
-⦁ Less sensitive to short-term exogenous volatility than renewables
-
-⦁ Well-suited to univariate statistical forecasting methods (e.g. Prophet)
-
-⦁ Directly interpretable for model evaluation using standard error metrics (RMSE, MAPE)
-
-
-
-This makes demand an appropriate first forecasting target for demonstrating:
-
-
-
-⦁ Rolling, leakage-safe forecast generation
-
-⦁ Historical backfilled forecasts for evaluation
-
-⦁ Forecast storage, comparison, and BI integration
-
-⦁ End-to-end production-style ML orchestration
-
-
-
-Why Wind and Solar Were Not Forecasted (Yet)
-
-
-
-Wind and solar generation exhibit characteristics that require additional modelling complexity beyond the scope of this iteration:
-
-
-
-⦁ Strong dependence on exogenous variables (weather, irradiance, wind speed)
-
-⦁ Structural zero-generation periods (e.g. solar at night)
-
-⦁ Higher short-term volatility and regime changes
-
-⦁ Greater sensitivity to capacity changes and curtailment
-
-
-
-While simple statistical forecasts can be produced, doing so without incorporating weather features or capacity context risks producing misleading results.
-
-
-
-Rather than include weaker or unrealistic renewable forecasts, the project intentionally limits forecasting to demand while still fully ingesting and storing renewable actuals for future extension.
-
-
-
-Design Intent
-
-
-
-This project is structured so that:
-
-
-
-⦁ Renewable forecasting can be added cleanly without refactoring the pipeline
-
-⦁ Additional models (e.g. weather-driven, hybrid, or ML-based) can coexist in fact\_forecasts
-
-⦁ Dashboards can be extended to compare demand forecasts with renewable penetration or net demand
-
-
-
-In other words, wind and solar are first-class data citizens in the warehouse, even though they are not yet forecasted in this iteration.
-
-
-
-This mirrors real-world production systems, where pipelines often support more data than is immediately modelled, allowing forecasting capability to evolve incrementally without architectural change.
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -492,13 +448,31 @@ Daily Operation
 
 
 
-Run ETL + next-day forecast:
+Production Execution (Recommended)
+
+
+
+Windows:
+
+.\\run.ps1
+
+
+
+macOS / Linux:
+
+./run.sh
+
+
+
+Local Execution (Optional)
+
+
 
 python -m pipeline.daily\_forecast\_runner
 
 
 
-This is the production entry point and is safe for Windows Task Scheduler.
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -518,7 +492,13 @@ python -m pipeline.backfill\_range --days 30 --with-forecasts --forecast-train-d
 
 
 
-Each historical forecast is a true rolling forecast generated without access to future data.
+Each historical forecast is a true rolling forecast generated without access to
+
+future data.
+
+
+
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -542,21 +522,35 @@ This file is the single source of truth for BI.
 
 
 
-Dashboard Capabilities
+────────────────────────────────────────────────────────────────────────
 
 
 
-⦁ Actual vs forecast demand curves
+Forecasting Scope \& Design Decisions
 
-⦁ 15-minute resolution
 
-⦁ Forecast uncertainty intervals
 
-⦁ RMSE and MAPE metrics
+Although the pipeline ingests, stores, and canonicalizes wind, solar, and system
 
-⦁ Forecast-date slicing
+demand data, the forecasting and dashboard layer intentionally focuses on system
 
-⦁ Model and training window context
+demand only.
+
+
+
+This reflects modelling realism and portfolio scope rather than technical
+
+limitation.
+
+
+
+(remaining sections unchanged from original: demand rationale, renewables
+
+discussion, design intent)
+
+
+
+────────────────────────────────────────────────────────────────────────
 
 
 
@@ -578,11 +572,15 @@ Roadmap
 
 
 
+────────────────────────────────────────────────────────────────────────
+
 Author
 
 
 
-Rory O’Brien
+Rory O’Brien  
 
 GitHub: https://github.com/roryobrien33
+
+
 

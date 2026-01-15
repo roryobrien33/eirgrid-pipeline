@@ -1,0 +1,34 @@
+services:
+  eirgrid:
+    platform: linux/amd64
+    build: .
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      EIRGRID_BASE_URL: ${EIRGRID_BASE_URL:-https://www.smartgriddashboard.com/api/chart/}
+      LOCAL_TZ: ${LOCAL_TZ:-Europe/Dublin}
+      USER_AGENT: ${USER_AGENT:-EirGridPipeline/1.0}
+      TRAIN_DAYS: ${TRAIN_DAYS:-60}
+    volumes:
+      - ./db:/app/db
+      - ./data:/app/data
+    command: ["/bin/bash","-lc","python -m pipeline.daily_forecast_runner --train-days $${TRAIN_DAYS}"]
+
+
+  shell:
+    platform: linux/amd64
+    build: .
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      EIRGRID_BASE_URL: ${EIRGRID_BASE_URL:-https://www.smartgriddashboard.com/api/chart/}
+      LOCAL_TZ: ${LOCAL_TZ:-Europe/Dublin}
+      USER_AGENT: ${USER_AGENT:-EirGridPipeline/1.0}
+    volumes:
+      - ./db:/app/db
+      - ./data:/app/data
+    command: ["/bin/bash"]
+    stdin_open: true
+    tty: true
