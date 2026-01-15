@@ -552,28 +552,6 @@ discussion, design intent)
 
 ────────────────────────────────────────────────────────────────────────
 
-
-
-Roadmap
-
-
-
-⦁ Multi-region forecasting
-
-⦁ Additional renewable forecasts
-
-⦁ Model comparison dashboards
-
-⦁ DuckDB or Postgres backend
-
-⦁ Cloud storage and query layer
-
-⦁ Orchestration with Prefect or Airflow
-
-
-
-────────────────────────────────────────────────────────────────────────
-
 Author
 
 
