@@ -4,7 +4,7 @@ EirGrid Renewable Energy, Demand \& Forecasting Pipeline
 
 Automated ingestion, warehousing, forecasting, and analytics pipeline for
 
-EirGrid Smart Grid Dashboard data (wind, solar, system demand).
+EirGrid Smart Grid Dashboard data (wind generation, solar generation, system demand).
 
 
 
@@ -17,6 +17,10 @@ timezone-safe parsing, normalized data warehousing, idempotent daily runs,
 rolling demand forecasting, historical forecast backfills, and BI-ready
 
 dataset export for Power BI dashboards.
+
+
+
+Note: Wind and solar metrics represent generation, not demand. They are ingested and stored as contextual system variables but are not forecasted in this iteration.
 
 
 
@@ -70,11 +74,11 @@ This single command will:
 
 ⦁ Persist outputs to:
 
-&nbsp; - db/eirgrid.db
+  - db/eirgrid.db
 
-&nbsp; - data/processed/forecasts/\*.csv
+  - data/processed/forecasts/\*.csv
 
-&nbsp; - data/processed/dashboard/\*.parquet
+  - data/processed/dashboard/\*.parquet
 
 
 
@@ -192,89 +196,89 @@ Architecture Overview (ASCII)
 
 Smart Grid Dashboard API
 
-&nbsp; └─ wind / solar / system demand (JSON)
+  └─ wind / solar / system demand (JSON)
 
 
 
-&nbsp;       ↓
+        ↓
 
 
 
 Ingestion Layer
 
-&nbsp; └─ fetch\_data.py
+  └─ fetch\_data.py
 
-&nbsp;    - HTTP retry / backoff
+     - HTTP retry / backoff
 
-&nbsp;    - JSON validation
+     - JSON validation
 
-&nbsp;    - Europe/Dublin → UTC conversion
+     - Europe/Dublin → UTC conversion
 
-&nbsp;    - 15-minute tidy records
+     - 15-minute tidy records
 
 
 
-&nbsp;       ↓
+        ↓
 
 
 
 Staging Layer (SQLite)
 
-&nbsp; └─ stg\_readings
+  └─ stg\_readings
 
-&nbsp;    - Append-only raw truth
+     - Append-only raw truth
 
-&nbsp;    - All ingested observations
+     - All ingested observations
 
 
 
-&nbsp;       ↓
+        ↓
 
 
 
 Canonical Warehouse
 
-&nbsp; └─ fact\_readings
+  └─ fact\_readings
 
-&nbsp;    - Deduplicated measurements
+     - Deduplicated measurements
 
-&nbsp;    - Idempotent daily promotion
+     - Idempotent daily promotion
 
-&nbsp;    - Last-write-wins semantics
+     - Last-write-wins semantics
 
 
 
-&nbsp;       ↓
+        ↓
 
 
 
 Forecasting Layer
 
-&nbsp; └─ Prophet-based demand forecasts
+  └─ Prophet-based demand forecasts
 
-&nbsp;    - Rolling next-day forecasts
+     - Rolling next-day forecasts
 
-&nbsp;    - Leakage-safe training window
+     - Leakage-safe training window
 
-&nbsp;    - Fallback safety model
+     - Fallback safety model
 
-&nbsp;    - Stored in fact\_forecasts
+     - Stored in fact\_forecasts
 
 
 
-&nbsp;       ↓
+        ↓
 
 
 
 Analytics \& BI Export
 
-&nbsp; └─ Parquet datasets
+  └─ Parquet datasets
 
-&nbsp;    - Actual vs forecast curves
+     - Actual vs forecast curves
 
-&nbsp;    - Error metrics (RMSE, MAPE)
+     - Error metrics (RMSE, MAPE)
 
-&nbsp;    - Power BI–ready format
+     - Power BI–ready format
 
 
 
@@ -530,7 +534,7 @@ Forecasting Scope \& Design Decisions
 
 
 
-Although the pipeline ingests, stores, and canonicalizes wind, solar, and system
+Although the pipeline ingests, stores, and canonicalizes wind generation, solar generation, and system
 
 demand data, the forecasting and dashboard layer intentionally focuses on system
 
@@ -556,9 +560,7 @@ Author
 
 
 
-Rory O’Brien  
+Rory O’Brien
 
 GitHub: https://github.com/roryobrien33
-
-
 

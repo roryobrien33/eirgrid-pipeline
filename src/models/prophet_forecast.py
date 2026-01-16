@@ -11,7 +11,7 @@ Robust mode:
 - retry Prophet fit a few times
 - if Prophet fails, fall back to deterministic slot-median forecast per metric
 
-IMPORTANT (no leakage / no cheating):
+IMPORTANT (no leakage):
 - When backfilling, pass as_of_day=<D-1> so the model trains ONLY on data available up to that day.
 - The forecast produced will be for D (next day after as_of_day).
 """
